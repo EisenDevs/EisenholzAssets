@@ -1,0 +1,16 @@
+{
+  "name": "com.eisenholz.assetcatalog",
+  "version": "1.0.0",
+  "displayName": "Eisenholz Asset Catalog",
+  "description": "Browse, download and import assets from the Eisenholz Asset Catalog service. Includes a Unity Accelerator setup helper.",
+  "unity": "6000.4",
+  "keywords": [
+    "editor",
+    "catalog",
+    "assets",
+    "accelerator"
+  ],
+  "author": {
+    "name": "Eisenholz"
+  }
+}
