@@ -13,6 +13,7 @@ namespace Eisenholz.AssetCatalog.Editor.Models
         public string id;
         public string name;
         public string type;        // model | texture | script | audio | prefab | material | shader | any
+        public string category;    // "" = unclassified; otherwise a category id from /categories
         public string version;
         public long sizeBytes;
         public string thumbnailUrl;
@@ -37,6 +38,7 @@ namespace Eisenholz.AssetCatalog.Editor.Models
         public string id;
         public string name;
         public string type;
+        public string category;
         public string version;
         public string description;
         public long sizeBytes;
@@ -52,6 +54,21 @@ namespace Eisenholz.AssetCatalog.Editor.Models
     {
         public string key;
         public string value;
+    }
+
+    /// <summary>One category as served by GET /categories.</summary>
+    [Serializable]
+    public sealed class CategoryDto
+    {
+        public string id;
+        public string label;
+    }
+
+    /// <summary>Response of GET /categories. Wrapped — JsonUtility cannot parse a top-level array.</summary>
+    [Serializable]
+    public sealed class CategoriesResponseDto
+    {
+        public CategoryDto[] categories;
     }
 
     /// <summary>Response of GET /health.</summary>

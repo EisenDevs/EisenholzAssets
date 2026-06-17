@@ -10,6 +10,7 @@ namespace Eisenholz.AssetCatalog.Editor.Api
     {
         Task<HttpResult<HealthDto>> GetHealthAsync(CancellationToken ct);
         Task<HttpResult<CatalogListResponseDto>> SearchAsync(SearchQuery query, CancellationToken ct);
+        Task<HttpResult<CategoriesResponseDto>> GetCategoriesAsync(CancellationToken ct);
         Task<HttpResult<AssetDetailDto>> GetAssetAsync(string id, CancellationToken ct);
         Task<HttpResult<AssetManifestDto>> GetManifestAsync(string id, CancellationToken ct);
     }

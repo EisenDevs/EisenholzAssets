@@ -20,8 +20,11 @@ namespace Eisenholz.AssetCatalog.Editor.Api
         {
             var text = UnityWebRequest.EscapeURL(query.Text ?? "");
             var type = UnityWebRequest.EscapeURL(string.IsNullOrEmpty(query.Type) ? "any" : query.Type);
-            return $"{m_BaseUrl}/assets?query={text}&type={type}&page={query.Page}&pageSize={query.PageSize}";
+            var category = UnityWebRequest.EscapeURL(string.IsNullOrEmpty(query.Category) ? "any" : query.Category);
+            return $"{m_BaseUrl}/assets?query={text}&type={type}&category={category}&page={query.Page}&pageSize={query.PageSize}";
         }
+
+        public string Categories() => $"{m_BaseUrl}/categories";
 
         public string Asset(string id) => $"{m_BaseUrl}/assets/{UnityWebRequest.EscapeURL(id)}";
 

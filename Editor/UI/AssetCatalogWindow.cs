@@ -20,6 +20,7 @@ namespace Eisenholz.AssetCatalog.Editor.UI
     {
         ToolbarSearchField m_Search;
         DropdownField m_TypeFilter;
+        DropdownField m_CategoryFilter;
         ScrollView m_Grid;
         DetailsPanel m_Details;
         Label m_Status;
@@ -37,13 +38,14 @@ namespace Eisenholz.AssetCatalog.Editor.UI
         CatalogEntryCard m_SelectedCard;
         int m_Page;
         int m_Total;
+        readonly Dictionary<string, string> m_CategoryLabelToId = new Dictionary<string, string>();
 
         [MenuItem("Window/Eisenholz/Asset Catalog")]
         public static void Open()
         {
             var window = GetWindow<AssetCatalogWindow>();
             window.titleContent = new GUIContent("Asset Catalog");
-            window.minSize = new Vector2(640f, 420f);
+            window.minSize = new Vector2(700f, 420f); 
             window.Show();
         }
 
@@ -82,6 +84,7 @@ namespace Eisenholz.AssetCatalog.Editor.UI
 
             root.Add(BuildFooter());
 
+            RefreshCategories();
             Reload();
         }
 
@@ -92,18 +95,29 @@ namespace Eisenholz.AssetCatalog.Editor.UI
                 style = { flexDirection = FlexDirection.Row, alignItems = Align.Center, marginBottom = 8f }
             };
 
-            m_Search = new ToolbarSearchField { style = { flexGrow = 1f } };
+            m_Search = new ToolbarSearchField { style = { flexGrow = 1f, flexShrink = 1f, minWidth = 120f } };
             m_Search.RegisterValueChangedCallback(_ => OnSearchChanged());
             toolbar.Add(m_Search);
 
             // Mirrors the REST-contract type taxonomy. "any" maps to no type filter.
+            toolbar.Add(new Label("Tipo:") { style = { marginLeft = 6f, marginRight = 4f } });
             m_TypeFilter = new DropdownField(
                 new List<string> { "any", "model", "texture", "script", "audio", "prefab", "material", "shader" }, 0)
             {
-                style = { width = 120f, marginLeft = 6f }
+                style = { minWidth = 90f }
             };
             m_TypeFilter.RegisterValueChangedCallback(_ => ReloadFromFirstPage());
             toolbar.Add(m_TypeFilter);
+
+            // Category filter. Starts with only "any"; populated from GET /categories
+            // (see RefreshCategories) so the fixed list lives on the server, not here.
+            toolbar.Add(new Label("Categoría:") { style = { marginLeft = 10f, marginRight = 4f } });
+            m_CategoryFilter = new DropdownField(new List<string> { "any" }, 0)
+            {
+                style = { minWidth = 150f }
+            };
+            m_CategoryFilter.RegisterValueChangedCallback(_ => ReloadFromFirstPage());
+            toolbar.Add(m_CategoryFilter);
 
             toolbar.Add(new Button(ReloadFromFirstPage) { text = "Refresh", style = { marginLeft = 6f } });
             toolbar.Add(new Button(
@@ -138,6 +152,51 @@ namespace Eisenholz.AssetCatalog.Editor.UI
             return footer;
         }
 
+        // Pulls the fixed category list from the server and fills the dropdown.
+        // Keeps "any" as the first choice. Failure is non-fatal: the dropdown just
+        // stays at "any" and category filtering is unavailable until the next reload.
+        async void RefreshCategories()
+        {
+            var settings = AssetCatalogSettings.GetOrCreate();
+            var api = CatalogServices.CreateApi(settings);
+            using var cts = new CancellationTokenSource();
+
+            var result = await api.GetCategoriesAsync(cts.Token);
+
+            var choices = new List<string> { "any" };
+            m_CategoryLabelToId.Clear();
+            m_CategoryLabelToId["any"] = "any";
+
+            if (result.IsSuccess && result.Value?.categories != null)
+            {
+                foreach (var c in result.Value.categories)
+                {
+                    if (c == null || string.IsNullOrEmpty(c.id))
+                        continue;
+                    var label = string.IsNullOrEmpty(c.label) ? c.id : c.label;
+                    choices.Add(label);
+                    m_CategoryLabelToId[label] = c.id;
+                }
+            }
+            else
+            {
+                CatalogLog.Warn($"Could not load categories: {ErrorText.Describe(result)}");
+            }
+
+            var current = m_CategoryFilter.value;
+            m_CategoryFilter.choices = choices;
+            // Preserve the selection if it still exists; otherwise fall back to "any".
+            m_CategoryFilter.SetValueWithoutNotify(choices.Contains(current) ? current : "any");
+        }
+
+        // Maps the visible dropdown label back to the category id sent to the API.
+        string ResolveCategoryId(string label)
+        {
+            if (string.IsNullOrEmpty(label))
+                return "any";
+            return m_CategoryLabelToId.TryGetValue(label, out var id) ? id : "any";
+        }
+
         void OnSearchChanged()
         {
             m_SearchDebounce?.Pause();
@@ -169,6 +228,7 @@ namespace Eisenholz.AssetCatalog.Editor.UI
             {
                 Text = m_Search.value,
                 Type = m_TypeFilter.value,
+                Category = ResolveCategoryId(m_CategoryFilter.value),
                 Page = m_Page,
                 PageSize = settings.PageSize
             };

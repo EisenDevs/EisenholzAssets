@@ -4,7 +4,8 @@ namespace Eisenholz.AssetCatalog.Editor.Models
     public sealed class SearchQuery
     {
         public string Text = "";
-        public string Type = "any";   // model | texture | script | any
+        public string Type = "any";       // model | texture | script | any
+        public string Category = "any";   // any | <category id from /categories>
         public int Page = 0;
         public int PageSize = 50;
     }

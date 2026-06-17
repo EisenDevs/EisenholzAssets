@@ -26,6 +26,9 @@ namespace Eisenholz.AssetCatalog.Editor.Api
         public Task<HttpResult<CatalogListResponseDto>> SearchAsync(SearchQuery query, CancellationToken ct) =>
             GetJsonAsync<CatalogListResponseDto>(m_Endpoints.Assets(query), ct);
 
+        public Task<HttpResult<CategoriesResponseDto>> GetCategoriesAsync(CancellationToken ct) =>
+            GetJsonAsync<CategoriesResponseDto>(m_Endpoints.Categories(), ct);
+
         public Task<HttpResult<AssetDetailDto>> GetAssetAsync(string id, CancellationToken ct) =>
             GetJsonAsync<AssetDetailDto>(m_Endpoints.Asset(id), ct);
 
