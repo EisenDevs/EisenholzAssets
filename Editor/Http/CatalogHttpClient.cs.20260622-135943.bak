@@ -45,13 +45,12 @@ namespace Eisenholz.AssetCatalog.Editor.Http
                 },
                 _ => true,
                 progress,
-                ct,
-                isDownload: true);
+                ct);
         }
 
         async Task<HttpResult<T>> SendWithRetryAsync<T>(
             Func<UnityWebRequest> factory, Func<UnityWebRequest, T> onSuccess,
-            IProgress<HttpProgress> progress, CancellationToken ct, bool isDownload = false)
+            IProgress<HttpProgress> progress, CancellationToken ct)
         {
             HttpResult<T> result = HttpResult<T>.ConnectionError("Request was not attempted.");
 
@@ -61,7 +60,7 @@ namespace Eisenholz.AssetCatalog.Editor.Http
                     return HttpResult<T>.Canceled();
 
                 using (var request = factory())
-                    result = await SendOnceAsync(request, onSuccess, progress, ct, isDownload);
+                    result = await SendOnceAsync(request, onSuccess, progress, ct);
 
                 if (result.Outcome == HttpOutcome.Canceled || result.Outcome == HttpOutcome.Success)
                     return result;
@@ -86,10 +85,10 @@ namespace Eisenholz.AssetCatalog.Editor.Http
 
         async Task<HttpResult<T>> SendOnceAsync<T>(
             UnityWebRequest request, Func<UnityWebRequest, T> onSuccess,
-            IProgress<HttpProgress> progress, CancellationToken ct, bool isDownload = false)
+            IProgress<HttpProgress> progress, CancellationToken ct)
         {
             ApplyHeaders(request);
-            if (m_TimeoutSeconds > 0 && !isDownload)
+            if (m_TimeoutSeconds > 0)
                 request.timeout = m_TimeoutSeconds;
 
             EditorApplication.CallbackFunction pump = null;
